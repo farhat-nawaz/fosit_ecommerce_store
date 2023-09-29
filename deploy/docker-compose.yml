@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: prod
+    image: fosit_ecommerce_store:${FOSIT_ECOMMERCE_STORE_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FOSIT_ECOMMERCE_STORE_HOST: 0.0.0.0
+      FOSIT_ECOMMERCE_STORE_DB_HOST: fosit_ecommerce_store-db
+      FOSIT_ECOMMERCE_STORE_DB_PORT: 3306
+      FOSIT_ECOMMERCE_STORE_DB_USER: fosit_ecommerce_store
+      FOSIT_ECOMMERCE_STORE_DB_PASS: fosit_ecommerce_store
+      FOSIT_ECOMMERCE_STORE_DB_BASE: fosit_ecommerce_store
+
+  db:
+    image: bitnami/mysql:8.0.30
+    hostname: fosit_ecommerce_store-db
+    restart: always
+    environment:
+      MYSQL_ROOT_USER: "fosit_ecommerce_store"
+      MYSQL_ROOT_PASSWORD: "fosit_ecommerce_store"
+      MYSQL_DATABASE: "fosit_ecommerce_store"
+      MYSQL_AUTHENTICATION_PLUGIN: "mysql_native_password"
+    healthcheck:
+      test: mysqladmin ping -h localhost
+      interval: 10s
+      timeout: 5s
+      retries: 40
+    volumes:
+    - fosit_ecommerce_store-db-data:/bitnami/mysql/data
+
+  migrator:
+    image: fosit_ecommerce_store:${FOSIT_ECOMMERCE_STORE_VERSION:-latest}
+    restart: "no"
+    command: aerich upgrade
+    environment:
+      FOSIT_ECOMMERCE_STORE_DB_HOST: fosit_ecommerce_store-db
+      FOSIT_ECOMMERCE_STORE_DB_PORT: 3306
+      FOSIT_ECOMMERCE_STORE_DB_USER: fosit_ecommerce_store
+      FOSIT_ECOMMERCE_STORE_DB_PASS: fosit_ecommerce_store
+      FOSIT_ECOMMERCE_STORE_DB_BASE: fosit_ecommerce_store
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+
+volumes:
+  fosit_ecommerce_store-db-data:
+    name: fosit_ecommerce_store-db-data

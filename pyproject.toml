@@ -1,0 +1,80 @@
+[tool.poetry]
+name = "fosit_ecommerce_store"
+version = "0.1.0"
+description = ""
+authors = []
+maintainers = []
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.103.0"
+uvicorn = { version = "^0.23.2", extras = ["standard"] }
+pydantic = "^2.4.2"
+pydantic-settings = "^2.0.3"
+yarl = "^1.9.2"
+ujson = "^5.8.0"
+tortoise-orm = "^0.20.0"
+aerich = "^0.7.2"
+aiomysql = "^0.2.0"
+mysqlclient = "^2.2.0"
+cryptography = "^41.0.4"
+aiofiles = "^23.2.1"
+httptools = "^0.6.0"
+loguru = "^0.7.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+flake8 = "^6.1.0"
+mypy = "^1.5.1"
+isort = "^5.12.0"
+pre-commit = "^3.4.0"
+black = "^23.9.1"
+autoflake = "^2.2.1"
+pytest-cov = "^4.1.0"
+anyio = "^4.0.0"
+pytest-env = "^1.0.1"
+asynctest = "^0.13.0"
+nest-asyncio = "^1.5.8"
+httpx = "^0.25.0"
+
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+src_paths = ["fosit_ecommerce_store"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+allow_subclassing_any = true
+allow_untyped_calls = true
+pretty = true
+show_error_codes = true
+implicit_reexport = true
+allow_untyped_decorators = true
+warn_unused_ignores = false
+warn_return_any = false
+namespace_packages = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+    "ignore:.*unclosed.*:ResourceWarning",
+]
+env = [
+    "FOSIT_ECOMMERCE_STORE_ENVIRONMENT=pytest",
+    "FOSIT_ECOMMERCE_STORE_DB_BASE=fosit_ecommerce_store_test",
+]
+
+[tool.aerich]
+tortoise_orm = "fosit_ecommerce_store.db.config.TORTOISE_CONFIG"
+location = "./fosit_ecommerce_store/db/migrations"
+src_folder = "./fosit_ecommerce_store"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
