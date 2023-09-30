@@ -1,11 +1,7 @@
 import enum
-from pathlib import Path
-from tempfile import gettempdir
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from yarl import URL
-
-TEMP_DIR = Path(gettempdir())
 
 
 class LogLevel(str, enum.Enum):  # noqa: WPS600
@@ -35,15 +31,15 @@ class Settings(BaseSettings):
     reload: bool = False
 
     # Current environment
-    environment: str = "dev"
+    environment: str = "production"
 
     log_level: LogLevel = LogLevel.INFO
     # Variables for the database
-    db_host: str = "localhost"
-    db_port: int = 3306
-    db_user: str = "fosit_ecommerce_store"
-    db_pass: str = "fosit_ecommerce_store"
-    db_base: str = "fosit_ecommerce_store"
+    db_host: str = ""
+    db_port: int = 0
+    db_user: str = ""
+    db_pass: str = ""
+    db_base: str = ""
     db_echo: bool = False
 
     @property

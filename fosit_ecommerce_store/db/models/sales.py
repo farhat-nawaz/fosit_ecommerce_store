@@ -18,6 +18,7 @@ class Sales(TimestampMixin):
     product: fields.ForeignKeyRelation[Products] = fields.ForeignKeyField(
         "models.Products",
         related_name="sold_items",
+        index=True,
     )
 
     quantity = fields.SmallIntField()

@@ -2,13 +2,16 @@ from tortoise import fields
 from tortoise.models import Model
 
 
-class TimestampMixin:
+class TimestampMixin(Model):
     created_at = fields.DatetimeField(null=False, auto_now_add=True)
     modified_at = fields.DatetimeField(null=False, auto_now=True)
 
+    class Meta:
+        abstract = True
 
-class ProductCategories(Model):
-    id = fields.UUIDField(pk=True)
+
+class ProductCategory(TimestampMixin):
+    id = fields.UUIDField(pk=True, index=True)
     name = fields.CharField(max_length=255)
     description = fields.TextField(null=True)
 
@@ -22,12 +25,13 @@ class ProductCategories(Model):
         ordering = ("name",)
 
 
-class Products(TimestampMixin, Model):
-    id = fields.UUIDField(pk=True)
+class Products(TimestampMixin):
+    id = fields.UUIDField(pk=True, index=True)
 
-    category: fields.ForeignKeyRelation[ProductCategories] = fields.ForeignKeyField(
-        "models.ProductCategories",
+    category: fields.ForeignKeyRelation[ProductCategory] = fields.ForeignKeyField(
+        "models.ProductCategory",
         related_name="products",
+        index=True,
     )
 
     name = fields.CharField(max_length=255)
@@ -46,12 +50,13 @@ class Products(TimestampMixin, Model):
         ordering = ("name",)
 
 
-class Inventory(TimestampMixin, Model):
-    id = fields.UUIDField(pk=True)
+class Inventory(TimestampMixin):
+    id = fields.UUIDField(pk=True, index=True)
 
     product: fields.ForeignKeyRelation[Products] = fields.ForeignKeyField(
         "models.Products",
         related_name="inventory_items",
+        index=True,
     )
 
     quantity_change = fields.SmallIntField()
@@ -66,12 +71,13 @@ class Inventory(TimestampMixin, Model):
         ordering = ("-created_at",)
 
 
-class LowStockAlerts(TimestampMixin, Model):
+class LowStockAlerts(TimestampMixin):
     id = fields.UUIDField(pk=True)
 
     product: fields.ForeignKeyRelation[Products] = fields.ForeignKeyField(
         "models.Products",
         related_name="low_stock_alerts",
+        index=True,
     )
 
     alert_threshold = fields.SmallIntField()
