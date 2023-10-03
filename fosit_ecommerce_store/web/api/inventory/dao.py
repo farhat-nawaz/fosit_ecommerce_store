@@ -66,8 +66,8 @@ class InventoryDAO:
         return products_db, products  # products added, products rejected
 
     @classmethod
-    async def get_all_products(cls) -> list[Products]:
-        return await Products.all()
+    async def get_inventory_status(cls) -> list[Inventory]:
+        return await Inventory.raw(cls._get_inventory_status_query())  # type:ignore
 
     @classmethod
     async def update_inventory(cls, payload: InventoryBase) -> Inventory | None:
@@ -98,3 +98,20 @@ class InventoryDAO:
     @staticmethod
     def generate_uuid() -> uuid.UUID:
         return uuid.uuid4()
+
+    @staticmethod
+    async def get_all_products() -> list[Products]:
+        return await Products.all()
+
+    @staticmethod
+    def _get_inventory_status_query() -> str:
+        return """
+            SELECT i.*
+            FROM inventory i
+            INNER JOIN (
+                SELECT product_id, MAX(created_at) AS max_date
+                FROM inventory
+                GROUP BY product_id
+            ) latest ON i.product_id = latest.product_id AND i.created_at = latest.max_date;
+
+        """

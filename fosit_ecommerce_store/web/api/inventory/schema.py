@@ -27,7 +27,7 @@ class InventoryOut(InventoryBase):
 
 
 class InventoryResponse(ResponseBase):
-    inventory_status: InventoryOut
+    inventory_status: InventoryOut | list[InventoryOut]
 
 
 class CategoryBase(BaseModel):

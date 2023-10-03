@@ -72,6 +72,25 @@ async def get_products() -> ProductAddedResponse:
     return ProductGetResponse(status_code=200, products=products)  # type:ignore
 
 
+@router.get(
+    "/status",
+    status_code=200,
+    response_model=InventoryResponse,
+)
+async def get_inventory_status() -> InventoryResponse:
+    """
+    Returns latest inventory status for all products
+
+    It returns 200 for a successful response.
+    """
+    inventory_status = await InventoryDAO.get_inventory_status()
+
+    return InventoryResponse(
+        status_code=200,
+        inventory_status=inventory_status,  # type:ignore
+    )
+
+
 @router.post(
     "/update_inventory",
     status_code=201,
@@ -82,8 +101,8 @@ async def update_inventory(payload: InventoryBase) -> InventoryResponse:
     Update quantity of a product in inventory.
 
     Value for `quantity_change` should be:
-        - negative if selling the product
-        - positive if restocking the project
+    - negative if selling the product
+    - positive if restocking the product
 
     It returns 201 if inventory is updated successfully.
     """
