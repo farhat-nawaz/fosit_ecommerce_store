@@ -1,7 +1,15 @@
 import uuid
 
-from fosit_ecommerce_store.db.models.inventory import ProductCategory, Products
-from fosit_ecommerce_store.web.api.inventory.schema import CategoryBase, ProductBase
+from fosit_ecommerce_store.db.models.inventory import (
+    Inventory,
+    ProductCategory,
+    Products,
+)
+from fosit_ecommerce_store.web.api.inventory.schema import (
+    CategoryBase,
+    InventoryBase,
+    ProductBase,
+)
 
 
 class InventoryDAO:
@@ -56,6 +64,36 @@ class InventoryDAO:
                 i += 1
 
         return products_db, products  # products added, products rejected
+
+    @classmethod
+    async def get_all_products(cls) -> list[Products]:
+        return await Products.all()
+
+    @classmethod
+    async def update_inventory(cls, payload: InventoryBase) -> Inventory | None:
+        # TODO: provide meaningful error messages
+        product = await Products.get_or_none(id=payload.product_id)
+        if product is None:
+            return None
+
+        inventory_db_existing = await Inventory.filter(product=product).first()
+
+        running_total = payload.quantity_change
+        if inventory_db_existing is not None:
+            running_total += inventory_db_existing.running_total
+
+        if running_total < 0:
+            return None
+
+        inventory = Inventory(
+            id=cls.generate_uuid(),
+            product=product,
+            quantity_change=payload.quantity_change,
+            running_total=running_total,
+        )
+        await inventory.save()
+
+        return inventory
 
     @staticmethod
     def generate_uuid() -> uuid.UUID:
