@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from tortoise import transactions
 
 from fosit_ecommerce_store.web.api.inventory.dao import InventoryDAO
 from fosit_ecommerce_store.web.api.inventory.schema import (
@@ -6,10 +7,14 @@ from fosit_ecommerce_store.web.api.inventory.schema import (
     CategoryIn,
     ErrorResponse,
     InventoryBase,
-    InventoryResponse,
+    InventoryGetResponse,
+    InventoryOut,
+    InventoryUpdateResponse,
     ProductAddedResponse,
     ProductGetResponse,
     ProductsIn,
+    ResponseBase,
+    SaleOut,
 )
 
 router = APIRouter()
@@ -75,9 +80,9 @@ async def get_products() -> ProductAddedResponse:
 @router.get(
     "/status",
     status_code=200,
-    response_model=InventoryResponse,
+    response_model=InventoryGetResponse,
 )
-async def get_inventory_status() -> InventoryResponse:
+async def get_inventory_status() -> InventoryGetResponse:
     """
     Returns latest inventory status for all products
 
@@ -85,7 +90,7 @@ async def get_inventory_status() -> InventoryResponse:
     """
     inventory_status = await InventoryDAO.get_inventory_status()
 
-    return InventoryResponse(
+    return InventoryGetResponse(
         status_code=200,
         inventory_status=inventory_status,  # type:ignore
     )
@@ -94,9 +99,9 @@ async def get_inventory_status() -> InventoryResponse:
 @router.post(
     "/update_inventory",
     status_code=201,
-    response_model=InventoryResponse,
+    response_model=InventoryUpdateResponse,
 )
-async def update_inventory(payload: InventoryBase) -> InventoryResponse:
+async def update_inventory(payload: InventoryBase) -> ResponseBase:
     """
     Update quantity of a product in inventory.
 
@@ -112,8 +117,21 @@ async def update_inventory(payload: InventoryBase) -> InventoryResponse:
             detail="Param 'quantity_change' cannot be 0",
         )
 
-    inventory = await InventoryDAO.update_inventory(payload=payload)
-    if inventory is None:
-        raise HTTPException(status_code=400, detail="Invalid request params")
+    async with transactions.in_transaction():
+        inventory = await InventoryDAO.update_inventory(payload=payload)
+        if inventory is None:
+            raise HTTPException(status_code=400, detail="Invalid request params")
 
-    return InventoryResponse(status_code=200, inventory_status=inventory)  # type:ignore
+        response = InventoryUpdateResponse(
+            status_code=200,
+            inventory_status=InventoryOut.model_validate(inventory),
+        )
+
+        if payload.quantity_change < 0:
+            sale = await InventoryDAO.add_new_sale(
+                payload.product_id,
+                abs(payload.quantity_change),
+            )
+            response.sale = SaleOut.model_validate(sale)
+
+    return response

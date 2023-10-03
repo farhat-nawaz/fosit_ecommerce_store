@@ -1,7 +1,7 @@
 import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, NonNegativeInt, PositiveFloat
+from pydantic import BaseModel, ConfigDict, NonNegativeInt, PositiveFloat, PositiveInt
 
 
 class ResponseBase(BaseModel):
@@ -10,24 +10,15 @@ class ResponseBase(BaseModel):
     error: bool = False
 
 
-class InventoryBase(BaseModel):
-    """Model to represent inventory update payload"""
-
-    product_id: UUID
-    quantity_change: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class InventoryOut(InventoryBase):
+class SaleOut(BaseModel):
     id: UUID
-    running_total: NonNegativeInt
+    product_id: UUID
+    quantity: PositiveInt
+    total_price: PositiveFloat
     created_at: datetime.datetime
     modified_at: datetime.datetime
 
-
-class InventoryResponse(ResponseBase):
-    inventory_status: InventoryOut | list[InventoryOut]
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategoryBase(BaseModel):
@@ -53,6 +44,35 @@ class CategoryResponse(ResponseBase):
 
 class CategoryAddedResponse(ResponseBase):
     categories: list[CategoryOut]
+
+
+class InventoryBase(BaseModel):
+    """Model to represent inventory update payload"""
+
+    product_id: UUID
+    quantity_change: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class InventoryOut(InventoryBase):
+    id: UUID
+    running_total: NonNegativeInt
+    created_at: datetime.datetime
+    modified_at: datetime.datetime
+
+
+class InventoryGetResponse(ResponseBase):
+    inventory_status: list[InventoryOut]
+
+
+class InventoryUpdateResponse(ResponseBase):
+    inventory_status: InventoryOut
+    sale: SaleOut | None = None
+
+
+class InventorySaleResponse(InventoryUpdateResponse):
+    sale: SaleOut | None = None
 
 
 class ProductBase(BaseModel):

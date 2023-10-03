@@ -1,10 +1,13 @@
 import uuid
 
+from pydantic.types import PositiveInt
+
 from fosit_ecommerce_store.db.models.inventory import (
     Inventory,
     ProductCategory,
     Products,
 )
+from fosit_ecommerce_store.db.models.sales import Sales
 from fosit_ecommerce_store.web.api.inventory.schema import (
     CategoryBase,
     InventoryBase,
@@ -64,6 +67,24 @@ class InventoryDAO:
                 i += 1
 
         return products_db, products  # products added, products rejected
+
+    @classmethod
+    async def add_new_sale(
+        cls,
+        product_id: uuid.UUID,
+        quantity: PositiveInt,
+    ) -> Sales:
+        product = await Products.get(id=product_id)
+
+        sale = Sales(
+            id=cls.generate_uuid(),
+            product=product,
+            quantity=quantity,
+            total_price=product.price * quantity,
+        )
+        await sale.save()
+
+        return sale
 
     @classmethod
     async def get_inventory_status(cls) -> list[Inventory]:
