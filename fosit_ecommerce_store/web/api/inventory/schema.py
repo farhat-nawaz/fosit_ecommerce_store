@@ -49,6 +49,8 @@ class ProductBase(BaseModel):
     description: str
     price: float
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ProductsIn(BaseModel):
     products: list[ProductBase]
@@ -57,11 +59,12 @@ class ProductsIn(BaseModel):
 class ProductsOut(ProductBase):
     id: UUID
 
-    model_config = ConfigDict(from_attributes=True)
+    # model_config = ConfigDict(from_attributes=True)
 
 
 class ProductAddedResponse(ResponseBase):
     products: list[ProductsOut]
+    products_rejected: list[ProductBase]
 
 
 class ErrorResponse(ResponseBase):

@@ -41,11 +41,17 @@ async def add_products(payload: ProductsIn) -> ProductAddedResponse:
 
     It returns 201 if product is added successfully.
     """
-    # if Cat
 
-    products = await InventoryDAO.add_new_products(products=payload.products)
+    products, products_rejected = await InventoryDAO.add_new_products(
+        products=payload.products,
+        fetch_related=True,
+    )
 
-    return ProductAddedResponse(status_code=201, products=products)  # type:ignore
+    return ProductAddedResponse(
+        status_code=201,
+        products=products,  # type:ignore
+        products_rejected=products_rejected,
+    )  # type:ignore
 
 
 @router.post("/update_inventory")

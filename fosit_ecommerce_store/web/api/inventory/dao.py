@@ -23,30 +23,39 @@ class InventoryDAO:
         return await ProductCategory.bulk_create(categories_db, batch_size=4000)
 
     @classmethod
-    async def add_new_products(cls, products: list[ProductBase]) -> list[Products]:
+    async def add_new_products(
+        cls,
+        products: list[ProductBase],
+        fetch_related: bool = False,
+    ) -> tuple[list[Products], list[ProductBase]]:
         products_db = []
 
         for product in products:
             product_db = Products(**product.model_dump(), id=cls.generate_uuid())
             products_db.append(product_db)
 
-        # products =
+        products_db = await Products.bulk_create(
+            products_db,
+            batch_size=4000,
+            ignore_conflicts=True,
+        )
 
-        # products = Products.bulk_create(
-        #     map(
-        #         lambda obj: Products(**obj.model_dump(), id=cls.generate_uuid()),
-        #         products,
-        #     ),
-        #     batch_size=4000,
-        # )
+        # This algorithm efficiently divides added and rejected objects
+        # TODO: provide rejection reason
+        i = j = 0
+        for _ in range(len(products)):
+            if products_db[j].category is not None:
+                if fetch_related:
+                    await products_db[j].fetch_related("category")
 
-        return await Products.bulk_create(products_db, batch_size=4000)
+                products.pop(i)
+                j += 1
 
-    # @classmethod
-    # async def verify_foreign_keys_exist(
-    #     cls, model: BaseModel, keys: list[uuid.UUID]
-    # ) -> bool:
-    #     """"""
+            else:
+                products_db.pop(j)
+                i += 1
+
+        return products_db, products  # products added, products rejected
 
     @staticmethod
     def generate_uuid() -> uuid.UUID:
