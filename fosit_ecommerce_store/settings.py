@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     db_port: int = 0
     db_user: str = ""
     db_pass: str = ""
-    db_base: str = ""
+    db_name: str = ""
     db_echo: bool = False
 
     @property
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
             port=self.db_port,
             user=self.db_user,
             password=self.db_pass,
-            path=f"/{self.db_base}",
+            path=f"/{self.db_name}",
         )
 
     model_config = SettingsConfigDict(
