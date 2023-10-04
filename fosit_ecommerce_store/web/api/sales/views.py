@@ -1,5 +1,3 @@
-from typing import Literal
-
 from fastapi import APIRouter
 
 from fosit_ecommerce_store.web.api.sales.dao import SaleDAO
@@ -8,6 +6,7 @@ from fosit_ecommerce_store.web.api.sales.schema import (
     SaleRawDataOut,
     SaleRevenueCompareResponse,
     SaleRevenueResponse,
+    TimeGrain,
 )
 
 router = APIRouter()
@@ -54,7 +53,7 @@ async def raw_data(payload: SaleIn) -> SaleRawDataOut:
     response_model=SaleRevenueResponse,
 )
 async def revenue_by_period(
-    period: Literal["daily", "weekly", "monthly"],
+    period: TimeGrain,
 ) -> SaleRevenueResponse:
     """
     Get sales data grouped by a period.

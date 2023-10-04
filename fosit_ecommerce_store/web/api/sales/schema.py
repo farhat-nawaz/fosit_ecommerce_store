@@ -1,8 +1,21 @@
 import datetime
-from typing import Literal
+import enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, PositiveFloat, PositiveInt
+
+
+class TimeGrain(enum.Enum):
+    DAILY = "DAILY"
+    WEEKLY = "WEEKLY"
+    MONTHLY = "MONTHLY"
+
+    @classmethod
+    def _missing_(cls, value):  # type:ignore
+        for member in cls:
+            if member.value == value.upper():
+                return member
+        return None
 
 
 class ResponseBase(BaseModel):
@@ -33,7 +46,7 @@ class SaleIn(BaseModel):
 
 
 class SaleByPeriodIn(BaseModel):
-    period: Literal["daily", "weekly", "monthly"]
+    period: TimeGrain
 
 
 class SaleRawDataOut(ResponseBase):

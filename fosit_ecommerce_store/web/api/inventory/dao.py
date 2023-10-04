@@ -134,5 +134,4 @@ class InventoryDAO:
                 FROM inventory
                 GROUP BY product_id
             ) latest ON i.product_id = latest.product_id AND i.created_at = latest.max_date;
-
         """

@@ -1,28 +1,28 @@
 import uuid
-from typing import Literal
 
 import tortoise
+from tortoise.expressions import Q
 
 from fosit_ecommerce_store.db.models.inventory import Products
 from fosit_ecommerce_store.db.models.sales import Sales
-from fosit_ecommerce_store.web.api.sales.schema import SaleIn
+from fosit_ecommerce_store.web.api.sales.schema import SaleIn, TimeGrain
 
 
 class SaleDAO:
     """Class to interact with database tables related to inventory"""
 
-    periods_format_mapping: dict[str, str] = {
-        "daily": "%Y-%m-%d",
-        "weekly": "%Y-%u",
-        "monthly": "%Y-%m-01",
+    periods_format_mapping: dict[TimeGrain, str] = {
+        TimeGrain.DAILY: "%Y-%m-%d",
+        TimeGrain.WEEKLY: "%Y-%u",
+        TimeGrain.MONTHLY: "%Y-%m-01",
     }
 
     @staticmethod
     async def get_raw_sales_data(params: SaleIn) -> list[Sales]:
-        sales = Sales.filter()
+        query = Q()
 
         if params.products is not None and len(params.products):
-            sales = sales.filter(product_id__in=params.products)
+            query = query | Q(product_id__in=params.products)
 
         if params.categories is not None and len(params.categories):
             product_ids = tortoise.expressions.Subquery(
@@ -31,15 +31,14 @@ class SaleDAO:
                     flat=True,
                 ),
             )
+            query = query | Q(product_id__in=product_ids)
 
-            sales = sales.filter(product_id__in=product_ids).all()
-
-        return await sales
+        return await Sales.filter(query)
 
     @classmethod
     async def get_revenue_by_period(
         cls,
-        period: Literal["daily", "weekly", "monthly"],
+        period: TimeGrain,
     ) -> list[dict[str, str | float]]:
         revenue = (
             Sales.annotate(
