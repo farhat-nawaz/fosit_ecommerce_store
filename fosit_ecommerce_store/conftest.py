@@ -68,3 +68,27 @@ async def client(
     """
     async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture
+async def product_categories() -> dict[str, list[dict[str, str]]]:
+    """
+    Fixture that creates client for requesting server.
+
+    :param fastapi_app: the application.
+    :yield: client for the app.
+    """
+    return {
+        "categories": [{"name": "Electronics", "description": "Electronic devices"}],
+    }
+
+
+@pytest.fixture
+async def products_invalid() -> dict[Any, Any]:
+    """
+    Fixture that creates client for requesting server.
+
+    :param fastapi_app: the application.
+    :yield: client for the app.
+    """
+    return {}
