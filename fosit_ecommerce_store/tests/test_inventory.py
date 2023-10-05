@@ -28,10 +28,12 @@ async def test_add_categories(
 
 
 @pytest.mark.anyio
-async def test_add_products(
+@pytest.mark.parametrize("test_input, expected", [({}, ("Field required", "missing"))])
+async def test_add_products_error(
     client: AsyncClient,
     fastapi_app: FastAPI,
-    products_invalid: dict[Any, Any],
+    test_input: dict[str, str],
+    expected: tuple[str, str],
 ) -> None:
     """
     Checks the endpoint to add categories.
@@ -40,12 +42,39 @@ async def test_add_products(
     :param fastapi_app: current FastAPI application.
     """
     url = fastapi_app.url_path_for("add_products")
-    response = await client.post(url, json=products_invalid)
+    response = await client.post(url, json=test_input)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     r: dict[str, Any] = response.json()
+    msg, error_type = expected
 
-    assert r["detail"][0]["msg"] == "Field required"
-    assert r["detail"][0]["input"] == products_invalid
-    assert r["detail"][0]["type"] == "missing"
+    assert r["detail"][0]["msg"] == msg
+    assert r["detail"][0]["input"] == test_input
+    assert r["detail"][0]["type"] == error_type
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("expected", [(200, "Operation successful!", False)])
+async def test_get_products(
+    client: AsyncClient,
+    fastapi_app: FastAPI,
+    expected: tuple[int, str, bool],
+) -> None:
+    """
+    Checks the endpoint to add categories.
+
+    :param client: client for the app.g
+    :param fastapi_app: current FastAPI application.
+    """
+    status_code, msg, error = expected
+    url = fastapi_app.url_path_for("get_products")
+
+    response = await client.get(url)
+
+    assert response.status_code == status_code
+
+    r: dict[str, Any] = response.json()
+
+    assert r["message"] == msg
+    assert r["error"] == error
