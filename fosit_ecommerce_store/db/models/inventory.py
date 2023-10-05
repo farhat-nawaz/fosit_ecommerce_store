@@ -36,7 +36,8 @@ class Products(TimestampMixin):
 
     name = fields.CharField(max_length=255)
     description = fields.TextField(null=True)
-    price = fields.IntField()
+    price = fields.FloatField()
+    low_stock_alert_threshold = fields.SmallIntField(default=10)
 
     inventory_items: fields.ReverseRelation["Inventory"]
     low_stock_alerts: fields.ReverseRelation["LowStockAlerts"]

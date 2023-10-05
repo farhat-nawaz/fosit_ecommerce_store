@@ -4,6 +4,7 @@ from pydantic.types import PositiveInt
 
 from fosit_ecommerce_store.db.models.inventory import (
     Inventory,
+    LowStockAlerts,
     ProductCategory,
     Products,
 )
@@ -87,6 +88,17 @@ class InventoryDAO:
         return sale
 
     @classmethod
+    async def generate_low_stock_alert(cls, product: Products) -> LowStockAlerts:
+        alert = LowStockAlerts(
+            id=cls.generate_uuid(),
+            product=product,
+            alert_threshold=product.low_stock_alert_threshold,
+        )
+        await alert.save()
+
+        return alert
+
+    @classmethod
     async def get_inventory_status(cls) -> list[Inventory]:
         return await Inventory.raw(cls._get_inventory_status_query())  # type:ignore
 
@@ -113,6 +125,9 @@ class InventoryDAO:
             running_total=running_total,
         )
         await inventory.save()
+
+        if inventory.running_total < product.low_stock_alert_threshold:
+            await cls.generate_low_stock_alert(product=product)
 
         return inventory
 
