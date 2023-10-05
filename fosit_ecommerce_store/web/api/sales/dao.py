@@ -63,8 +63,8 @@ class SaleDAO:
             revenue = await conn.execute_query_dict(
                 cls._get_compare_revenue_by_category_period_query(),
             )
-        except tortoise.exceptions.OperationalError:
-            return None
+        except tortoise.exceptions.OperationalError as e:
+            raise e
 
         rvalue = {}
         for r in revenue:
@@ -82,24 +82,27 @@ class SaleDAO:
     @staticmethod
     def _get_compare_revenue_by_category_period_query() -> str:
         return """
-        SELECT
-            category,
-            SUM(total_price) AS revenue,
-            CASE
+        SELECT category, revenue, CASE
                 WHEN `rank` = 1 THEN "this_month"
                 WHEN `rank` = 2 THEN "last_month"
             ELSE "unknown"
             END AS period
         FROM (
-                SELECT
-                    c.name AS category,
-                    DATE_FORMAT(s.created_at, "%Y-%m-01") AS date,
-                    s.total_price AS total_price,
-                    ROW_NUMBER() OVER (PARTITION BY c.name ORDER BY DATE_FORMAT(s.created_at, "%Y-%m-01") DESC, c.name ASC) AS `rank` # noqa: E501
-                FROM sales s
-                INNER JOIN products p ON p.id = s.product_id
-                INNER JOIN product_categories c ON c.id = p.category_id
+            SELECT
+                category,
+                SUM(total_price) AS revenue,
+                ROW_NUMBER() OVER (PARTITION BY category ORDER BY date DESC) AS `rank`
+            FROM (
+                    SELECT
+                        c.name AS category,
+                        DATE_FORMAT(s.created_at, "%Y-%m-01") AS date,
+                        s.total_price AS total_price
+                    FROM sales s
+                    INNER JOIN products p ON p.id = s.product_id
+                    INNER JOIN product_categories c ON c.id = p.category_id
+            ) AS base_table
+            GROUP BY category, date
         ) AS ranked_sales
-        WHERE `rank` < 3
-        GROUP BY category, date;
+
+        WHERE `rank` < 3;
         """
