@@ -2,6 +2,8 @@ from typing import Awaitable, Callable
 
 from fastapi import FastAPI
 
+from fosit_ecommerce_store.db.utils import create_database
+
 
 def register_startup_event(
     app: FastAPI,
@@ -20,7 +22,9 @@ def register_startup_event(
     async def _startup() -> None:  # noqa: WPS430
         app.middleware_stack = None
         app.middleware_stack = app.build_middleware_stack()
-        pass  # noqa: WPS420
+
+        # create database if doesn't exist
+        await create_database()
 
     return _startup
 
